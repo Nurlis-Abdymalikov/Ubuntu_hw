@@ -1,13 +1,25 @@
 import flet as ft
+from database import ExpenseDB
 
 def main(page: ft.Page):
     page.title = "Трекер расходов"
-    expenses = []
+    db = ExpenseDB()
 
     name_input = ft.TextField(label="Название расхода", width=300)
     amount_input = ft.TextField(label="Сумма расхода", width=150)
-    total_text = ft.Text(value="0", size=20, weight="bold", color=ft.colors.BLUE)
-    expense_list = ft.Column(expand=True, scroll='always' )
+    total_text = ft.Text(value=str(db.get_total_amount()), size=20, weight="bold", color=ft.colors.BLUE)
+    expense_list = ft.Column(expand=True, scroll='always')
+
+    def refresh_expenses():
+        expense_list.controls.clear()
+        for name, amount in db.get_all_expenses():
+            expense_item = ft.Row([
+                ft.Text(name, size=16, weight="bold", color=ft.colors.BLACK),
+                ft.Text(f"{amount}", size=16, color=ft.colors.BLUE),
+                ft.Icon(name=ft.icons.EDIT, color=ft.colors.BLUE),
+                ft.Icon(name=ft.icons.DELETE, color=ft.colors.RED)
+            ], spacing=10)
+            expense_list.controls.append(expense_item)
 
     def add_expense(e):
         name = name_input.value
@@ -21,22 +33,16 @@ def main(page: ft.Page):
             page.snack_bar.open = True
             page.update()
             return
-        
-        expense_item = ft.Row([
-            ft.Text(name, size=16, weight="bold", color=ft.colors.BLACK),
-            ft.Text(f"{amount}", size=16, color=ft.colors.BLUE),
-            ft.Icon(name=ft.icons.EDIT, color=ft.colors.BLUE),
-            ft.Icon(name=ft.icons.DELETE, color=ft.colors.RED)
-        ], spacing=10)
 
-        expense_list.controls.append(expense_item)
-
-        current_total = float(total_text.value)
-        total_text.value = str(current_total + amount)
+        db.add_expense(name, amount)
+        refresh_expenses()
+        total_text.value = str(db.get_total_amount())
 
         name_input.value = ""
         amount_input.value = ""
         page.update()
+
+    refresh_expenses()
 
     page.add(
         ft.Text("Ваши расходы", size=30, weight="bold"),
@@ -46,4 +52,4 @@ def main(page: ft.Page):
         expense_list
     )
 
-ft.app(target=main) 
+ft.app(target=main)
