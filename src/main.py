@@ -7,7 +7,7 @@ def main(page: ft.Page):
     name_input = ft.TextField(label="Название расхода", width=300)
     amount_input = ft.TextField(label="Сумма расхода", width=150)
     total_text = ft.Text(value="0", size=20, weight="bold", color=ft.colors.BLUE)
-    expense_list = ft.Column()
+    expense_list = ft.Column(expand=True, scroll='always' )
 
     def add_expense(e):
         name = name_input.value
@@ -46,4 +46,4 @@ def main(page: ft.Page):
         expense_list
     )
 
-ft.app(target=main)
+ft.app(target=main) 
