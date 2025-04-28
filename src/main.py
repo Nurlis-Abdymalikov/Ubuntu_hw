@@ -12,12 +12,23 @@ def main(page: ft.Page):
 
     def refresh_expenses():
         expense_list.controls.clear()
-        for name, amount in db.get_all_expenses():
+        for expense_id, name, amount in db.get_all_expenses():
             expense_item = ft.Row([
                 ft.Text(name, size=16, weight="bold", color=ft.colors.BLACK),
                 ft.Text(f"{amount}", size=16, color=ft.colors.BLUE),
-                ft.Icon(name=ft.icons.EDIT, color=ft.colors.BLUE),
-                ft.Icon(name=ft.icons.DELETE, color=ft.colors.RED)
+                ft.IconButton(
+                    icon=ft.icons.EDIT,
+                    icon_color=ft.colors.BLUE,
+                    icon_size=20,
+                    # пока что без функции редактирования
+                ),
+                ft.IconButton(
+                    icon=ft.icons.DELETE,
+                    icon_color=ft.colors.RED,
+                    icon_size=20,
+                    data=expense_id,          # сохраним ID расхода
+                    on_click=delete_expense    # обработчик нажатия
+                ),
             ], spacing=10)
             expense_list.controls.append(expense_item)
 
@@ -40,6 +51,13 @@ def main(page: ft.Page):
 
         name_input.value = ""
         amount_input.value = ""
+        page.update()
+
+    def delete_expense(e):
+        expense_id = e.control.data
+        db.delete_expense(expense_id)
+        refresh_expenses()
+        total_text.value = str(db.get_total_amount())
         page.update()
 
     refresh_expenses()

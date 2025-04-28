@@ -17,11 +17,14 @@ class ExpenseDB:
 
     def add_expense(self, name, amount):
         with self.conn:
-            self.conn.execute("INSERT INTO expenses (name, amount) VALUES (?, ?)", (name, amount))
+            self.conn.execute(
+                "INSERT INTO expenses (name, amount) VALUES (?, ?)",
+                (name, amount)
+            )
 
     def get_all_expenses(self):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT name, amount FROM expenses")
+        cursor.execute("SELECT id, name, amount FROM expenses")  # ← добавил id
         return cursor.fetchall()
 
     def get_total_amount(self):
@@ -29,3 +32,8 @@ class ExpenseDB:
         cursor.execute("SELECT SUM(amount) FROM expenses")
         result = cursor.fetchone()[0]
         return result if result else 0.0
+
+    def delete_expense(self, expense_id):
+        with self.conn:
+            self.conn.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
+
