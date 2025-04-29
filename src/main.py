@@ -20,14 +20,13 @@ def main(page: ft.Page):
                     icon=ft.icons.EDIT,
                     icon_color=ft.colors.BLUE,
                     icon_size=20,
-                    # пока что без функции редактирования
                 ),
                 ft.IconButton(
                     icon=ft.icons.DELETE,
                     icon_color=ft.colors.RED,
                     icon_size=20,
-                    data=expense_id,          # сохраним ID расхода
-                    on_click=delete_expense    # обработчик нажатия
+                    data=expense_id,          
+                    on_click=delete_expense    
                 ),
             ], spacing=10)
             expense_list.controls.append(expense_item)
@@ -71,3 +70,4 @@ def main(page: ft.Page):
     )
 
 ft.app(target=main)
+
