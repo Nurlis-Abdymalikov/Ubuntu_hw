@@ -1,39 +1,41 @@
 import sqlite3
 
-class ExpenseDB:
-    def __init__(self, db_name="expenses.db"):
-        self.conn = sqlite3.connect(db_name)
-        self.create_table()
 
-    def create_table(self):
-        with self.conn:
-            self.conn.execute('''
-                CREATE TABLE IF NOT EXISTS expenses (
+class Database:
+    def __init__(self, path: str):
+        self.path = path
+
+    # создание таблиц, если они не существуют
+    def create_tables(self):
+        with sqlite3.connect(self.path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS todos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    amount REAL NOT NULL
+                    todo TEXT,
+                    category TEXT
                 )
-            ''')
-
-    def add_expense(self, name, amount):
-        with self.conn:
-            self.conn.execute(
-                "INSERT INTO expenses (name, amount) VALUES (?, ?)",
-                (name, amount)
+                """
             )
+            conn.commit()
 
-    def get_all_expenses(self):
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT id, name, amount FROM expenses")  # ← добавил id
-        return cursor.fetchall()
+    # добавление задачи(todo) в таблицу todos
+    def add_todo(self, todo: str, category: str):
+        with sqlite3.connect(self.path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO todos (todo, category) VALUES (?, ?)
+                """,
+                (todo, category),
+            )
+            conn.commit()
 
-    def get_total_amount(self):
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT SUM(amount) FROM expenses")
-        result = cursor.fetchone()[0]
-        return result if result else 0.0
-
-    def delete_expense(self, expense_id):
-        with self.conn:
-            self.conn.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
-
+    # получение всех задач из таблицы todos
+    def all_todos(self):
+        with sqlite3.connect(self.path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM todos")
+            # возвращает список кортежей!
+            return cursor.fetchall()

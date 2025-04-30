@@ -1,73 +1,92 @@
 import flet as ft
-from database import ExpenseDB
+from database import Database
+from pprint import pprint
+
 
 def main(page: ft.Page):
-    page.title = "Трекер расходов"
-    db = ExpenseDB()
+    # установка заголовка
+    page.title = "Приложение для управления списком дел"
 
-    name_input = ft.TextField(label="Название расхода", width=300)
-    amount_input = ft.TextField(label="Сумма расхода", width=150)
-    total_text = ft.Text(value=str(db.get_total_amount()), size=20, weight="bold", color=ft.colors.BLUE)
-    expense_list = ft.Column(expand=True, scroll='always')
+    # создание объекта Database для работы с БД
+    database = Database("database.sqlite")
+    # создание таблиц
+    database.create_tables()
+    pprint(database.all_todos())
 
-    def refresh_expenses():
-        expense_list.controls.clear()
-        for expense_id, name, amount in db.get_all_expenses():
-            expense_item = ft.Row([
-                ft.Text(name, size=16, weight="bold", color=ft.colors.BLACK),
-                ft.Text(f"{amount}", size=16, color=ft.colors.BLUE),
-                ft.IconButton(
-                    icon=ft.icons.EDIT,
-                    icon_color=ft.colors.BLUE,
-                    icon_size=20,
-                ),
-                ft.IconButton(
-                    icon=ft.icons.DELETE,
-                    icon_color=ft.colors.RED,
-                    icon_size=20,
-                    data=expense_id,          
-                    on_click=delete_expense    
-                ),
-            ], spacing=10)
-            expense_list.controls.append(expense_item)
-
-    def add_expense(e):
-        name = name_input.value
-        amount_str = amount_input.value
-        try:
-            amount = float(amount_str)
-            if amount <= 0:
-                raise ValueError()
-        except ValueError:
-            page.snack_bar = ft.SnackBar(ft.Text("Сумма должна быть положительным числом!"))
-            page.snack_bar.open = True
-            page.update()
-            return
-
-        db.add_expense(name, amount)
-        refresh_expenses()
-        total_text.value = str(db.get_total_amount())
-
-        name_input.value = ""
-        amount_input.value = ""
-        page.update()
-
-    def delete_expense(e):
-        expense_id = e.control.data
-        db.delete_expense(expense_id)
-        refresh_expenses()
-        total_text.value = str(db.get_total_amount())
-        page.update()
-
-    refresh_expenses()
-
-    page.add(
-        ft.Text("Ваши расходы", size=30, weight="bold"),
-        ft.Row([name_input, amount_input, ft.ElevatedButton(text="Добавить", on_click=add_expense)]),
-        ft.Text("Общая сумма расходов:", size=16),
-        total_text,
-        expense_list
+    title = ft.Text(
+        value="Список дел на день", size=30, weight=ft.FontWeight.BOLD, italic=True
     )
 
-ft.app(target=main)
+    # функция, которая будет возвращать список Row с задачами из БД
+    def build_rows():
+        rows = []
+        # проход по всем записям из таблицы todos
+        for t in database.all_todos():
+            print(t)
+            # каждую запись отображаем в виде строки Row
+            rows.append(
+                ft.Row(
+                    controls=[
+                        ft.Text(value=t[1], size=20, color=ft.Colors.PINK),  # текст
+                        ft.Text(value=t[2], size=20),  # категория
+                        # кнопка для редактирования задачи
+                        ft.IconButton(
+                            icon=ft.Icons.EDIT_OUTLINED,
+                            icon_color=ft.Colors.BLUE,
+                            icon_size=20,
+                        ),
+                        # кнопка для удаления задачи
+                        ft.IconButton(
+                            icon=ft.Icons.DELETE_OUTLINED,
+                            icon_color=ft.Colors.RED,
+                            icon_size=20,
+                        ),
+                    ]
+                )
+            )
+        return rows
 
+    # функция, которая будет вызываться при нажатии кнопки "Добавить"
+    def add_todo(e):
+        print(todo_input.value)
+        # добавляем задачу в БД через вызов метода add_todo
+        database.add_todo(todo_input.value, category_input.value)
+
+        todo_list_area.controls = build_rows()  # обновляем отображаемый список
+        todo_input.value = ""  # очищаем поле ввода
+        category_input.value = ""
+        todo_input.focus()
+        page.update()  # обновляем страницу, обязательно а то не будет работать
+
+    # создание текстового поля
+    todo_input = ft.TextField(
+        label="Введите что-нибудь",  # текст подсказки
+    )
+    category_input = ft.TextField(
+        label="Введите категорию",  # текст подсказки
+    )
+
+    # создание кнопки для добавления задачи
+    add_button = ft.ElevatedButton(
+        "Добавить",  # текст на кнопке
+        on_click=add_todo,  # функция, которая будет вызываться при нажатии
+        color=ft.Colors.PINK,  # цвет текста на кнопке
+        bgcolor=ft.Colors.AMBER,  # цвет фона кнопки
+    )
+
+    form_area = ft.Row(controls=[todo_input, category_input, add_button])
+
+    # создание колонки
+    todo_list_area = ft.Column(
+        expand=True,
+        scroll="always",
+        controls=build_rows(),  # список элементов, которые будут в колонке
+    )  # место, где будет отображаться список
+
+    # добавление элементов на страницу(окно)
+    page.add(
+        title, form_area, todo_list_area
+    )  # от того, в каком порядке они тут добавляются, зависит в каком порядке они отображаются
+
+
+ft.app(main)
